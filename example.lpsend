@@ -1,0 +1,121 @@
+-- Printer configuration for the HP lj1320
+
+define_printer {
+   version_id="lpsend 1.0";
+
+   device="/dev/lp0";
+   -- Optional check for vendor and product id.
+   usbid = { vid=0x03f0, pid=0x1d17 };
+
+   --   how many times to try getting printer, and
+   --   how long to wait after failures.
+   open_tries = 5;
+   open_try_wait = 200;
+
+   --   write no more than this many bytes at a time
+   --   comment out for no restrictions.
+   write_limit = 16;
+
+   queue_directory="/var/log/lpd";
+
+   --   lp administrator mail, or comment out
+   --   if there's no lifeguard on duty.
+   -- complaints_to="lpadmin";
+
+   --   set to zero to inhibit report by mail.
+   --   comment out to disable limit.
+   jabber_limit= 64 * 1024;
+
+   job={
+      log="lj1320-log";
+      sequence="lj1320-seq";
+   };
+
+   -- Times are in milliseconds
+   timeout={
+      -- These live in the compiled code.
+      hold_time = 100,             -- Eject buffered readback after this delay
+      drain_time = 5000,           -- Wait for readback if no EOJ response seen
+      select_wait = 100,           -- Wait time for i/o loop select()
+      write_stall_limit = 60000,   -- Wait limit for write progress
+      read_stall_limit = 3000,	   -- Wait limit for read progress
+      readback_wait = 50,          -- Thread delay on emtry read
+
+      -- These dwell in the lua script.
+      eoj_drain_time = 1500,       -- Wait for readback after EOJ response seen
+      blather_time_limit = 20000,  -- Readback time cutoff after EOJ
+   };
+
+   blather_line_limit = 250	   -- Readback line cutoff after EOJ
+
+   -- Solicit PJL STATUS readback
+   use_pjl_status = true;
+
+   -- Optional documentation to return with help mail.
+   documentation=[[
+Feature codes for the lj1320 monochrome printer
+
+  R          Set high resolution
+  r          Set low resolution
+  S          Increase smoothing
+  s          Disable smoothing
+  e          Economode - saves toner
+  d          Duplex printing - flip along long edge
+  t          Duplex printing - flip along short edge
+  p          Pause printer for operator action
+  H          Raise fuser temperature for heavy paper
+
+By default, printer is set to medium resolution with moderate smoothing.
+]];
+
+   postscript={
+      -- Optional prefix placed before settings programs
+      prefix=[[
+/spd { >> setpagedevice } def
+/pstrd /PostRenderingEnhanceDetails def
+]];
+
+      -- Optional suffix placed between settings programs and user program
+      suffix=[[
+userdict /spd undef
+userdict /pstrd undef
+]];
+
+      -- Format: option={AND mask, OR mask}
+      switches={
+	 R={ 0x1ec, 0x001 };
+	 r={ 0x1fc, 0x000 };
+	 S={ 0x1f3, 0x00c };
+	 s={ 0x1F3, 0x000 };
+	 e={ 0x1e0, 0x010 };
+	 d={ 0x19f, 0x020 };
+	 t={ 0x19f, 0x060 };
+	 p={ 0x17f, 0x080 };
+	 H={ 0x0ff, 0x100 };
+      };
+
+      -- Starting values for PostScript feature flags
+      defaults=0x006;
+
+      -- Format: {AND mask, MATCH value, pagedevice entry}
+      settings={
+	 { 0x001, 0x001, "<< /HWResolution [1200 1200] spd" };
+	 { 0x001, 0x000, "<< /HWResolution [600 600] spd" };
+	 { 0x002, 0x002, "<< /PreRenderingEnhance true spd" };
+	 { 0x002, 0x000, "<< /PreRenderingEnhance false spd" };
+	 { 0x00c, 0x000, "<< pstrd << /REValue 0 /Type 8 >> spd" };
+	 { 0x00c, 0x004, "<< pstrd << /REValue 1 /Type 8 >> spd" };
+	 { 0x00c, 0x00c, "<< pstrd << /REValue 2 /Type 8 >> spd" };
+	 { 0x010, 0x010, "<< /EconoMode true spd" };
+	 { 0x010, 0x000, "<< /EconoMode false spd" };
+	 { 0x020, 0x020, "<< /Duplex true spd" };
+	 { 0x020, 0x000, "<< /Duplex false spd" };
+	 { 0x040, 0x040, "<< /Tumble true spd" };
+	 { 0x040, 0x000, "<< /Tumble false spd" };
+	 { 0x080, 0x000, "<< /ManualFeed false /MediaPosition 0 spd" };
+	 { 0x080, 0x080, "<< /ManualFeed false /MediaPosition 3 spd" };
+	 { 0x100, 0x000, "<< /MediaType (Plain) spd" };
+	 { 0x100, 0x100, "<< /MediaType (Rough) spd" };
+      }
+   }
+}

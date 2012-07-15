@@ -1,0 +1,195 @@
+LPSend - a replacement for usblpsend
+
+* global options
+  
+  |---------------+----------|
+  | job_user      | lprng    |
+  | job_host      |          |
+  | job_id        |          |
+  | job_time      |          |
+  | job_printer   |          |
+  |---------------+----------|
+  | send_results  | option m |
+  | suppress_mail | option M |
+  | strip_parity  | option p |
+  |---------------+----------|
+
+* errors
+  
+   |---------------------+--------+-------------------+---------------------|
+   | description         | where  | handling          | rationale           |
+   |---------------------+--------+-------------------+---------------------|
+   | Bad gids            | [[file:main.c][main.c]] | panic FAIL        | bad build/install   |
+   | Bad chunk load      |        | panic FAIL        | bad build/install   |
+   | Pcall failed        |        | panic FAIL/REMOVE | untrapped error     |
+   |---------------------+--------+-------------------+---------------------|
+   | Exim parent failure | [[file:util.c][util.c]] | lua_error         |                     |
+   | Exim child failure  |        | parent: lua_error | sig/exit in msg     |
+   |                     |        | child: syslog     |                     |
+   | Open jobid failed   |        | lua_error         | bad config or OOM   |
+   |---------------------+--------+-------------------+---------------------|
+   | Most system errors  | [[file:io.c][io.c]]   | return nil+errno  | handle in script    |
+   | Printer not open    |        | lua_error         | initialize_io gave  |
+   |                     |        |                   | an error already    |
+   | Readback buffer     |        | lua_error         |                     |
+   | exhaustion          |        |                   |                     |
+   | Output buffer       |        | Panic FAIL        | Software error      |
+   | exhaustion          |        |                   |                     |
+   |---------------------+--------+-------------------+---------------------|
+   | Type errors         | ANY    | lua_error         | bad config or prog  |
+   | Out of memory       | ANY    | UNTESTED/CRASH    | CAN'T DETECT W/OC   |
+   |---------------------+--------+-------------------+---------------------|
+  
+* constant tables ([[file:main.c::static%20void%20install_constant_tables][main.c]])
+
+   |-----------------+-------------|
+   | table name      | entry       |
+   |-----------------+-------------|
+   | errno           | EIO         |
+   |                 | ENODEV      |
+   |-----------------+-------------|
+   | lprng_exit_code | JSUCC       |
+   |                 | JFAIL       |
+   |                 | JREMOVE     |
+   |-----------------+-------------|
+   | lpsend *        | STDIN_READ  |
+   |                 | PRINT_WRITE |
+   |                 | PRINT_READ  |
+   |-----------------+-------------|
+
+   * If MOCK is defined.
+  
+* job prefix / suffix
+** prefix
+   UEL@PJL INFO PAGECOUNT
+   @PJL USTATUS DEVICE = ON
+   @PJL ENTER LANGUAGE = POSTSCRIPT
+   %!PS
+   <page device settings>
+   flush (@PJL BOJ
+   ) print <0C> print flush
+   
+** suffix
+   <EOT>UEL@PJL USTATUSOFF
+   @PJL ECHO EOJ <nonce>
+  
+* printer readback
+  UEL:                  <BOB><ESC>%-12345X
+  PJL message:		<BOB>@PJL USTATUS|INFO .*<FF>
+  Job start:            <BOB>@PJL BOJ<CR><LF><FF>
+  Job end:		<BOB>@PJL ECHO EOJ nonce<CR><LF><FF>
+  Postscript message:	%%[ .*: .* ]%%<CR><LF>
+  Postscript aborting:  <BOB>%%[ Flushing: rest of job .* ]%%<CR><LF><LF>
+
+** Notes:
+   <BOB> ::= beginning of read buffer
+   @PJL BOJ should occur only once.  Don't recognize subsequent occurances.
+   
+* functions
+
+   |----------+-----------------------------------------+-----------------|
+   | where    | Lua name                                | C name          |
+   |----------+-----------------------------------------+-----------------|
+   | [[file:util.c][util.c]]   | syslog (msg)                            | lpsend_syslog   |
+   |          | errno_to_message (int) -> str           |                 |
+   |          | get_next_job_id (jidfile) -> int        |                 |
+   |          | sendmail (recip, msg)                   |                 |
+   |          | request_remove_job ()                   |                 |
+   |          | permit_character (int)                  |                 |
+   |          | forbid_character (int)                  |                 |
+   |          | <not used from lua>                     | lpsend_validate |
+   |          | invalid_character_found (int) -> bool   |                 |
+   |          | CTYPE is... functions (int) -> bool     |                 |
+   |          | stopwatch() -> stopwatch *              |                 |
+   |          | time() -> seconds since epoch           |                 |
+   |          | wall_clock() -> high res time as string | wall_clock+     |
+   |----------+-----------------------------------------+-----------------|
+   | [[file:base64.c][base64.c]] | base64_encode(str) -> str               | base64_encode   |
+   |----------+-----------------------------------------+-----------------|
+   | [[file:io.c][io.c]]     | initialize_io { see I/O loop config }   |                 |
+   |          | set_timeouts { see I/O loop config }    |                 |
+   |          | io_loop { see I/O loop input } ->       |                 |
+   |          | see I/O loop return values              |                 |
+   |          | check_vid_pid {vid,pid} -> bool         |                 |
+   |----------+-----------------------------------------+-----------------|
+
+   * A stopwatch is a closure that returns the number of milliseconds
+     since its creation.
+
+   + C wall_clock returns a static string.
+     
+* I/O loop
+**  Configuration table entries:
+    
+   |----------------------+-----------------------------------+---------|
+   | printer              |                                   | string  |
+   | open_tries           | How many times to try opening     |         |
+   | open_try_wait        | How long to wait between tries    | msec    |
+   | write_limit          | Most to write at one time         | bytes   |
+   | strip_parity         | strip eight bit of data           | boolean |
+   | hold_time *          | Eject partial readback            | msec    |
+   |                      | after this delay.                 |         |
+   | drain_time *         | Delay for readback after error    | msec    |
+   | eoj_drain_time * +   | Delay for readback after EOJ      | msec    |
+   | select_wait *        | Wait time for i/o loop select()   | msec    |
+   | write_stall_limit *  | Maximum wait write progress       | msec    |
+   | read_stall_limit *   | Maximum wait read progress        | msec    |
+   | readback_wait *      | Thread delay on emtry read        | msec    |
+   | blather_time_limit * | Readback cutoff by time after EOJ | msec    |
+   | blather_line_limit * | Readback cutoff by line after EOJ | msec    |
+   |----------------------+-----------------------------------+---------|
+
+    * Timeout args can be sent to lpsend.set_timeout to subsequently
+      change their values.  See [[file:lpsend.h::HOLD_TIME_MSEC_DEFAULT][lpsend.h]] for defaults.
+
+    + eoj_drain_time is used to reset drain_time when the EOJ nonce
+      readback is seen.
+
+**  Input values:
+
+   |------------------------+--------------------------------+---------------|
+   | clear_buffer           | Discard current output buffer  | boolean/nil   |
+   | reset_write_stall_test | Paper out support              | boolean/nil   |
+   | freeze_input           | Stop/start reading job input   | boolean       |
+   |                        | set elapsed drain time if true |               |
+   | notices_only           | Discard normal readback        | boolean/nil   |
+   | add_to_output          | Append output buffer           | string or nil |
+   |------------------------+--------------------------------+---------------|
+
+**  Return values:
+
+   |--------------------------------+---------------------------------------|
+   | general format: name, params   |                                       |
+   |--------------------------------+---------------------------------------|
+   | "posix_error", int, string     | Fatal posix error and additional info |
+   | "printer_status", int          | Change to abnormal (!= 0x18) status   |
+   | "invalid_data"                 | Data stream contains forbidden chars  |
+   | "not_postscript"               | No PostScript prefix.  You lose!      |
+   | "write_timeout"                | Write stall limit exceeded            |
+   | "input_stalled"                | Read stall limit exceeded             |
+   | "eoj_reached"                  | Stdin is closed                       |
+   | "readback_drained"             | Readback timed out at eoj (normal)    |
+   | "ps_msg", string, string/false | normal readback                       |
+   |                                | non-message string may be             |
+   |                                | zero length when PostScript           |
+   |                                | message is returned.                  |
+   | "ps_msg", length, string/false | normal readback (suppressed)          |
+   | "pjl_msg", string              | PJL status                            |
+   | "stray_delimiter"              | PostScript stray delimiter            |
+   | "uel_read"                     | PJL UEL sequence read                 |
+   |--------------------------------+---------------------------------------|
+    
+* Mocking
+
+  mock_read_stdin/printer(buffer_size) -> false/nil, errno or string
+
+  mock_write_printer(string) -> false/nil, errno or bytes written
+
+  mock_select(check bits, timeout_usec or nil)
+	      -> false/nil, errno or check bits
+
+  mock_clock_gettime() -> tv_sec, tv_nsec
+
+  mock_getlpstatus() -> false/nil, errno or status(int)
+  
+  
