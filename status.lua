@@ -1,5 +1,5 @@
 function status_inquire(config, timeouts)
-   local info_status_pattern = '^INFO STATUS'..status_pattern
+   local info_status_pattern = '^INFO STATUS'..STATUS_PATTERN
 
    local io_config = table.join(timeouts, { printer = config.device,
 					    drain_time = 500

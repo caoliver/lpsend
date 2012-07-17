@@ -13,4 +13,4 @@ function table.join(...)
    return newtab
 end
 
-status_pattern = '\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
+STATUS_PATTERN = '\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
