@@ -36,16 +36,17 @@ function mail_brief(subject, message)
 To: %s
 Subject: %s
 
-%s.
+%s
+.
 ]], recipient, subject..printer , message))
 end
 
 function mail_info(info)
-   mail_brief("Information about printer ", info.."\n")
+   mail_brief("Information about printer ", info)
 end
 
 function mail_alert(alert)
-   mail_brief("Alert condition for printer ", alert.."\n")
+   mail_brief("Alert condition for printer ", alert)
 end
 
 local function type_of_report()

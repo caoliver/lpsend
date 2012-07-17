@@ -35,7 +35,7 @@ local features, global_options, bad_options = process_options(arg, config)
 initialize_mail(global_options, config)
 
 if not features then
-   mail_brief("Invalid options to printer ", bad_options.."\n")
+   mail_brief("Invalid options to printer ", bad_options)
    os.exit(lprng_exit_code.JREMOVE);
 end
 

@@ -13,4 +13,7 @@ function table.join(...)
    return newtab
 end
 
-STATUS_PATTERN = '\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
+-- PJL readback scanners
+status_pattern = '\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
+info_status_pattern = '^INFO STATUS'..status_pattern
+ustatus_pattern = '^USTATUS DEVICE'..status_pattern

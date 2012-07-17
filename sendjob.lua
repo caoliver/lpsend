@@ -30,8 +30,8 @@ local function append_invalid_character_list()
 end
 
 function sendjob(config, timeouts, features, send_report)
-   local ustatus_pattern = '^USTATUS DEVICE'..STATUS_PATTERN
-   local info_status_pattern = '^INFO STATUS'..STATUS_PATTERN
+   local ustatus_pattern = ustatus_pattern
+   local info_status_pattern = info_status_pattern
 
    do
       local rndfile, err = io.open("/dev/urandom")
