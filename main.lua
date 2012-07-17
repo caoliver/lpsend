@@ -39,10 +39,6 @@ if not features then
    os.exit(lprng_exit_code.JREMOVE);
 end
 
-status_pattern='\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
-info_status_pattern = "^INFO STATUS"..status_pattern
-ustatus_pattern = 'USTATUS DEVICE'..status_pattern
-
 do
    local status_msg = "This printer is currently "
    if global_options.send_help then

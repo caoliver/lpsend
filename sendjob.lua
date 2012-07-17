@@ -1,6 +1,7 @@
 local job_prefix, job_suffix
 local write_log, write_log_limited
 
+
 -- Comment out if running mock I/O
 local nonce
 
@@ -29,6 +30,9 @@ local function append_invalid_character_list()
 end
 
 function sendjob(config, timeouts, features, send_report)
+   local ustatus_pattern = '^USTATUS DEVICE'..status_pattern
+   local info_status_pattern = '^INFO STATUS'..status_pattern
+
    do
       local rndfile, err = io.open("/dev/urandom")
       if not rndfile then error(err) end
