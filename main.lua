@@ -27,7 +27,6 @@ do
    local configfile=CONFIG_DIR..configname
    
    dofile(configfile..'.lpsend')
-   define_printer = nil
 end
 
 local features, global_options, bad_options = process_options(arg, config)
