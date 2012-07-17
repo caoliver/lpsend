@@ -130,20 +130,14 @@ LPSend - a replacement for usblpsend
    | hold_time *          | Eject partial readback            | msec    |
    |                      | after this delay.                 |         |
    | drain_time *         | Delay for readback after error    | msec    |
-   | eoj_drain_time * +   | Delay for readback after EOJ      | msec    |
    | select_wait *        | Wait time for i/o loop select()   | msec    |
    | write_stall_limit *  | Maximum wait write progress       | msec    |
    | read_stall_limit *   | Maximum wait read progress        | msec    |
    | readback_wait *      | Thread delay on emtry read        | msec    |
-   | blather_time_limit * | Readback cutoff by time after EOJ | msec    |
-   | blather_line_limit * | Readback cutoff by line after EOJ | msec    |
    |----------------------+-----------------------------------+---------|
 
     * Timeout args can be sent to lpsend.set_timeout to subsequently
       change their values.  See [[file:lpsend.h::HOLD_TIME_MSEC_DEFAULT][lpsend.h]] for defaults.
-
-    + eoj_drain_time is used to reset drain_time when the EOJ nonce
-      readback is seen.
 
 **  Input values:
 
