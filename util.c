@@ -12,12 +12,6 @@ static int errno_to_string(lua_State *L)
   return 1;
 }
 
-static int request_remove_job(lua_State *L)
-{
-  remove_job = 1;
-  return 0;
-}
-
 static int get_next_job_id(lua_State *L)
 {
   int jobident;
@@ -237,7 +231,6 @@ const luaL_Reg utilfuncs[] = {
   {"syslog", lpsend_syslog},
   {"sendmail", sendmail},
   {"get_next_job_id", get_next_job_id},
-  {"request_remove_job", request_remove_job},
   {"permit_character", permit_character},
   {"forbid_character", forbid_character},
   {"invalid_character_found", invalid_character_found},

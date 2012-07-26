@@ -68,8 +68,6 @@ int euidaccess(const char *pathname, int mode);
 
 extern int print_writefd, print_readfd;
 #endif
-extern int remove_job;
-extern pthread_mutex_t lua_vm_lock;
 
 extern const luaL_Reg mailfuncs[], base64funcs[], streamsfuncs[], utilfuncs[];
 

@@ -5,7 +5,7 @@ function with_catchall(default, transition_list)
    return transition_list
 end
 
-dfa_transition_table = {
+local dfa_transition_table = {
    q0 = with_catchall('q0', { ['%'] = 'q1', [' '] = 'q17' }),
    q1 = with_catchall('q0', { ['%'] = 'q2', [' '] = 'q17' }),
    q2 = with_catchall('q0', { ['%'] = 'q2', ['['] = 'q3', [' '] = 'q17' }),
@@ -16,13 +16,13 @@ dfa_transition_table = {
    q7 = with_catchall('q4', { [' '] = 'q5', ['%'] = 'q8' }),
    q8 = with_catchall('q4', { [' '] = 'q5', ['\r'] = 'q9' }),
    q9 = with_catchall('q4', { [' '] = 'q5', ['\n'] = 'q10' }),
-   q10 = with_catchall('q0', { }),   -- ACCEPTING STATE
+   q10 = with_catchall('q0', { }),
    q11 = with_catchall('q4', { [' '] = 'q5', ['%'] = 'q12' }),
    q12 = with_catchall('q4', { [' '] = 'q5', ['['] = 'q13' }),
    q13 = with_catchall('q4', { [' '] = 'q16', ['%'] = 'q11' }),
    q14 = with_catchall('q0', { ['%'] = 'q15' }),
    q15 = with_catchall('q0', { ['%'] = 'q16' }),
-   q16 = with_catchall('q16', { }),  -- KILL STATE
+   q16 = with_catchall('q16', { }),
    q17 = with_catchall('q0' , { [']'] = 'q18' }),
    q18 = with_catchall('q0' , { ['%'] = 'q19', [' '] = 'q18' }),
    q19 = with_catchall('q0' , { ['%'] = 'q20', [' '] = 'q18' }),
@@ -32,6 +32,14 @@ dfa_transition_table = {
    q23 = with_catchall('q4' , { ['%'] = 'q24', [' '] = 'q5'}),
    q24 = with_catchall('q4' , { [ '\r' ] = 'q25', [' '] = 'q5' }),
    q25 = with_catchall('q4' , { [ '\n' ] = 'q16', [' '] = 'q5' }),
+}
+
+local nicknames = {
+   Q_START = "q0", 
+   Q_PERCENT = "q1",
+   Q_PERCENT_AGAIN = "q2",
+   Q_PS_MSG = "q10",
+   Q_STRAY_DELIM = "q16"
 }
 
 function scan(str, state, offset)
@@ -66,7 +74,7 @@ C_translations = {
    ['\013'] = '\\r',
 }
 
-function generate()
+do
    local chtab = {}
    local revchtab = {}
    local chix = 1;
@@ -74,46 +82,66 @@ function generate()
    local stix = 1;
    local sttab = {}
 
-   for state_name, _ in pairs(dfa_transition_table) do
-      table.insert(sttab, state_name)
-   end
-   table.sort(sttab,
-	      function (a,b)
-		 return tonumber(a:sub(2,-1)) < tonumber(b:sub(2,-1)) end)
-   for ix, state_name in ipairs(sttab) do
-      local state = dfa_transition_table[state_name]
-      revsttab[state_name] = ix
-      stix = stix + 1
-      for char in pairs(state) do
-	 if chtab[char] == nil then
-	    chtab[char] = chix
-	    revchtab[chix] = char
-	    chix = chix + 1
+   function initialize_tables()
+      for state_name, _ in pairs(dfa_transition_table) do
+	 table.insert(sttab, state_name)
+      end
+      for ix, state_name in ipairs(sttab) do
+	 local state = dfa_transition_table[state_name]
+
+	 revsttab[state_name] = ix
+
+	 stix = stix + 1
+	 for char in pairs(state) do
+	    if chtab[char] == nil then
+	       chtab[char] = chix
+	       revchtab[chix] = char
+	       chix = chix + 1
+	    end
 	 end
       end
    end
 
-   print("unsigned char character_class[256] = {")
-   for char,name in ipairs(revchtab) do
-      print(string.format("  ['%s'] = %d,",
-			  (C_translations[name] or name),
-			  char))
-   end
-   print(string.format("};\n\nunsigned char dfa_transitions[][%d] = {", chix))
-   for i, state_name in ipairs(sttab) do
-      local outline = "  { "
-      local state = dfa_transition_table[state_name]
-      outline = outline..string.format("%d ", revsttab[state["NOMATCH"]] - 1)
-      for ch = 1, chix-1 do
-	 outline = outline..string.format(",%d ",
-					  revsttab[state[revchtab[ch]]] - 1)
+   function write_byte_class_table(array_declaration)
+      print(array_declaration.."[256] = {")
+      for char,name in ipairs(revchtab) do
+	 print(string.format("  ['%s'] = %d,",
+			     (C_translations[name] or name),
+			     char))
       end
-      print(string.format("%s},%s// %s",
-			  outline,
-			  string.rep(" ", 40 - #outline),
-			  state_name))
+      print "};\n"
    end
-   print "};\n"
+
+   function write_transition_table(array_declaration)
+      print(string.format(array_declaration.."[][%d] = {", chix))
+      for i, state_name in ipairs(sttab) do
+	 local outline = "  { "
+	 local state = dfa_transition_table[state_name]
+
+	 outline = outline..string.format("%d",
+					  revsttab[state["NOMATCH"]] - 1)
+	 for ch = 1, chix-1 do
+	    outline = outline..string.format(", %d",
+					     revsttab[state[revchtab[ch]]] - 1)
+	 end
+	 print(string.format("%s },%s",
+			     outline,
+			     nicknames[state_name] and
+				string.rep(" ", 40 - #outline)..'// '..
+				nicknames[state_name] or
+				''))
+      end
+      print "};\n"
+   end
+
+   function write_nickname_defines(prefix)
+      for nickname, state_name in pairs(nicknames) do
+	 print(string.format("#define %s%s %d",
+			     prefix,
+			     nickname,
+			     revsttab[state_name] - 1))
+      end
+   end
 end
 
 dot_translations = { 
@@ -122,7 +150,7 @@ dot_translations = {
    ['\032'] = 'space',
 }
 
-function visualize(start, accepts, kills)
+function visualize(start)
    print [[
 digraph g {
 page="8.5,11.0"
@@ -130,9 +158,8 @@ size="7,10"
 center=1
 "" [ shape=none ]
 ]]
-   for _,node in ipairs(accepts) do print (node..' [ peripheries=2 ]') end
-   for _,node in ipairs(kills) do
-      print (node..' [ peripheries=2 style=filled ]')
+   for nickname, state_name in pairs(nicknames) do
+      print(string.format('%s [ label="\\N\\n%s" peripheries=2 ]', state_name, nickname))
    end
    print ('"" -> '..start)
    for state,gotofn in pairs(dfa_transition_table) do
@@ -143,4 +170,13 @@ center=1
       end
    end
    print "}"
+end
+
+if arg[1] == "visualize" then
+   visualize('q0')
+elseif arg[1] == "generate" then
+   initialize_tables()
+   write_byte_class_table(arg[2])
+   write_transition_table(arg[3])
+   write_nickname_defines(arg[4])
 end

@@ -15,6 +15,11 @@ lpsend.lua: ${LUAPARTS}
 bytecode.o: ${LUAPARTS}
 	lua combine.lua ${LUAPARTS} | lua -b -n bytecode - $@
 
+dfa.h: dfa.lua
+	lua dfa.lua generate DFA_BYTE_CLASS DFA_TRANSITIONS '' >dfa.h
+
+io.o: io.c dfa.h
+
 lpsend: ${OBJS}
 	gcc ${LDFLAGS} -s -Wl,-E -o $@ $^
 
@@ -22,7 +27,7 @@ lpchat: lpchat.c
 	gcc -O2 -s -olpchat lpchat.c -lpthread
 
 clean:
-	rm -f lpchat lpsend lpsend.lua ${OBJS} `find -name \*~`
+	rm -f lpchat lpsend lpsend.lua dfa.h ${OBJS} `find -name \*~`
 
 loc:
 	wc -l ${LUAPARTS}

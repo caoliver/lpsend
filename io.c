@@ -179,6 +179,10 @@ int posix_error(lua_State *L, char *explanation)
   return 3;
 }
 
+#define DFA_BYTE_CLASS static unsigned char byte_class
+#define DFA_TRANSITIONS static unsigned char dfa_transition
+#include "dfa.h"
+
 static int process_readback(lua_State *L,
 				   int readback_available,
 				   int discard_normal_readback)
@@ -186,7 +190,7 @@ static int process_readback(lua_State *L,
   static char in_buffer[READBACK_BUFFER_SIZE];
   static int buffer_used;
   static int beginning;
-  static int state;
+  static int state = Q_START;
   static struct timespec last_nonzero_read;
   struct timespec when_read;
   int actual = 0;
@@ -205,44 +209,6 @@ static int process_readback(lua_State *L,
 
   int scan_readback()
   {
-    static unsigned char byte_class[256] = {
-      [' '] = 1,
-      ['%'] = 2,
-      ['['] = 3,
-      [']'] = 4,
-      ['\r'] = 5,
-      ['\n'] = 6,
-    };
-
-    static unsigned char dfa_transition[][7] = {
-      {0, 17, 1, 0, 0, 0, 0},		// q0
-      {0, 17, 2, 0, 0, 0, 0},		// q1
-      {0, 17, 2, 3, 0, 0, 0},		// q2
-      {0, 4, 1, 0, 0, 0, 0},		// q3
-      {4, 5, 11, 4, 22, 4, 4},		// q4
-      {4, 4, 11, 4, 6, 4, 4},		// q5
-      {4, 5, 7, 4, 4, 4, 4},		// q6
-      {4, 5, 8, 4, 4, 4, 4},		// q7
-      {4, 5, 4, 4, 4, 9, 4},		// q8
-      {4, 5, 4, 4, 4, 4, 10},		// q9
-      {0, 0, 0, 0, 0, 0, 0},		// q10
-      {4, 5, 12, 4, 4, 4, 4},		// q11
-      {4, 5, 4, 13, 4, 4, 4},		// q12
-      {4, 16, 11, 4, 4, 4, 4},		// q13
-      {0, 0, 15, 0, 0, 0, 0},		// q14
-      {0, 0, 16, 0, 0, 0, 0},		// q15
-      {16, 16, 16, 16, 16, 16, 16},	// q16
-      {0, 0, 0, 0, 18, 0, 0},		// q17
-      {0, 18, 19, 0, 0, 0, 0},		// q18
-      {0, 18, 20, 0, 0, 0, 0},		// q19
-      {0, 18, 0, 0, 0, 21, 0},		// q20
-      {0, 18, 0, 0, 0, 0, 16},		// q21
-      {4, 5, 23, 4, 4, 4, 4},		// q22
-      {4, 5, 24, 4, 4, 4, 4},		// q23
-      {4, 5, 4, 4, 4, 25, 4},		// q24
-      {4, 5, 4, 4, 4, 4, 16},		// q25
-    };
-
     int cursor;
     unsigned char *ch = (unsigned char *) &in_buffer[buffer_used];
 
@@ -251,16 +217,16 @@ static int process_readback(lua_State *L,
 	state = dfa_transition[state][byte_class[*ch++]];
 	switch (state)
 	  {
-	  case 0:
+	  case Q_START:
 	    beginning = 0;
 	    break;
-	  case 1:
+	  case Q_PERCENT:
 	    beginning = cursor;
 	    break;
-	  case 2:
+	  case Q_PERCENT_AGAIN:
 	    beginning = cursor - 1;
 	    break;
-	  case 10:
+	  case Q_PS_MSG:
 	    // End of PostScript Message.
 	    handle_normal_readback(in_buffer, beginning);
 	    lua_pushlstring(L,
@@ -270,13 +236,13 @@ static int process_readback(lua_State *L,
 	      {
 		buffer_used = new_used - cursor - 1;
 		memmove(in_buffer, &in_buffer[cursor + 1], buffer_used);
-		state = 0;
+		state = Q_START;
 		beginning = 0;
 	      }
 	    return 3;
-	  case 16:
+	  case Q_STRAY_DELIM:
 	    // Stray delimiter found.  Try to recover by setting state.
-	    state = 0;
+	    state = Q_START;
 	    lua_pushstring(L, "stray_delimiter");
 	    return 1;
 	  }
@@ -313,7 +279,7 @@ static int process_readback(lua_State *L,
 	  lua_pushboolean(L, 1);
 	  handle_normal_readback(in_buffer, buffer_used);
 	  buffer_used = 0;
-	  state = 0;
+	  state = Q_START;
 	  beginning = 0;
 	  lua_pushboolean(L, 0);
 	  return 3;
@@ -347,7 +313,7 @@ static int process_readback(lua_State *L,
 
   buffer_used = new_used;
 
-  if (state == 0 && buffer_used > 0)
+  if (state == Q_START && buffer_used > 0)
     {
       handle_normal_readback(in_buffer, buffer_used);
       lua_pushboolean(L, 0);

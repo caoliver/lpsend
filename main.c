@@ -1,7 +1,6 @@
 #include "lpsend.h"
 
 static lua_State *L;
-int remove_job;
 
 const struct luaL_Reg *libraries[] = {
   base64funcs,
@@ -94,7 +93,7 @@ int main(int argc, char *argv[])
 	     (errmsg = lua_tostring(L, -1))
 	     ? errmsg : "***CAN'T OBTAIN ERROR MESSAGE***");
       lua_close(L);
-      return remove_job ? JREMOVE : JFAIL;
+      return JFAIL;
     }
 
   lua_close(L);

@@ -94,7 +94,6 @@ LPSend - a replacement for usblpsend
    |          | errno_to_message (int) -> str           |                 |
    |          | get_next_job_id (jidfile) -> int        |                 |
    |          | sendmail (recip, msg)                   |                 |
-   |          | request_remove_job ()                   |                 |
    |          | permit_character (int)                  |                 |
    |          | forbid_character (int)                  |                 |
    |          | <not used from lua>                     | lpsend_validate |
