@@ -31,7 +31,7 @@ function status_inquire(config, timeouts)
 	 elseif (result ~= 24) then
 	    return string.format("in an unexpected state.  (%d)", result[2])
 	 end
-      elseif result[1] == "pjl_msg" then
+      elseif result[1] == "pjl_msg" and not result[2]:find(eoj_pattern) then
 	 local found, _, code = result[2]:find(info_status_pattern)
 	 if found then
 	    code = tonumber(code)

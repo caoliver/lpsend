@@ -398,9 +398,11 @@ The printer has stalled; you may have lost the end of your print job.]]
    end
 
    function pjl_handler.E(state, pjl_string)
-      found, _, token = pjl_string:find "^ECHO EOJ (.*)\r\n$"
-      if not found or token ~= nonce then
+      found, _, token = pjl_string:find(eoj_pattern)
+      if not found then
 	 return bad_pjl(state, pjl_string)
+      elseif token ~= nonce then
+	 return state
       end
       lpsend.set_timeouts { drain_time = timeouts.eoj_drain_time }
       return "eoj-nonce-seen"

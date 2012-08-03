@@ -17,3 +17,4 @@ end
 status_pattern = '\r\nCODE=([0-9]+)\r\nDISPLAY=".*"\r\nONLINE=TRUE\r\n'
 info_status_pattern = '^INFO STATUS'..status_pattern
 ustatus_pattern = '^USTATUS DEVICE'..status_pattern
+eoj_pattern = '^ECHO EOJ (.*)\r\n$'
