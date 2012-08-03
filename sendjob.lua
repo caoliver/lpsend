@@ -108,7 +108,7 @@ function sendjob(config, timeouts, features, send_report)
       (config.use_pjl_status and "@PJL USTATUSOFF\n" or "")..
       "@PJL ECHO EOJ "..
       nonce..
-      "\n@PJL EOJ\n"
+      "\n@PJL EOJ\n\27%-12345X"
 
    -- Define characters allowed in the PostScript input stream.
    --

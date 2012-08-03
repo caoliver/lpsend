@@ -12,7 +12,7 @@ function status_inquire(config, timeouts)
    end
 
    local arguments = { add_to_output =
-		       "\27%-12345X@PJL INFO STATUS\n@PJL EOJ\n",
+		       "\27%-12345X@PJL INFO STATUS\n@PJL EOJ\n\27%-12345X",
 		       notices_only = true,
 		       freeze_input = true
    }
