@@ -23,7 +23,7 @@ local dfa_transition_table = {
    q14 = with_catchall('q0', { ['%'] = 'q15' }),
    q15 = with_catchall('q0', { ['%'] = 'q16' }),
    q16 = with_catchall('q16', { }),
-   q17 = with_catchall('q0' , { [']'] = 'q18' }),
+   q17 = with_catchall('q0' , { ['%'] = 'q1', [']'] = 'q18' }),
    q18 = with_catchall('q0' , { ['%'] = 'q19', [' '] = 'q18' }),
    q19 = with_catchall('q0' , { ['%'] = 'q20', [' '] = 'q18' }),
    q20 = with_catchall('q0' , { [ '\r' ] = 'q21', [' '] = 'q18' }),
