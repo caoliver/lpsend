@@ -35,33 +35,35 @@ local dfa_transition_table = {
 }
 
 local nicknames = {
-   Q_START = "q0", 
-   Q_PERCENT = "q1",
-   Q_PERCENT_AGAIN = "q2",
-   Q_PS_MSG = "q10",
-   Q_STRAY_DELIM = "q16"
+   q0 = "Q_START",
+   q1 = "Q_PERCENT",
+   q2 = "Q_PERCENT_AGAIN",
+   q10 = "Q_PS_MSG",
+   q16 = "Q_STRAY_DELIM"
 }
 
 function scan(str, state, offset)
    local beginning = 0
    local action = {
-      q0 = function () beginning = 0 end,
-      q1 = function (i) beginning = i end,
-      q2 = function (i) beginning = i - 1 end,
-      q10 = function (i)
+      Q_START = function () beginning = 0 end,
+      Q_PERCENT = function (i) beginning = i end,
+      Q_PERCENT_AGAIN = function (i) beginning = i - 1 end,
+      Q_PS_MSG = function (i)
 	 return string.format('prefix: "%s"\nstate: %s\nfound: %s',
 			      str:sub(1, beginning - 1),
 			      state,
 			      str:sub(beginning,i))
       end,
-      q16 = function (i) return string.format('Stray delimiter at %d', i) end
+      Q_STRAY_DELIM = function (i)
+	 return string.format('Stray delimiter at %d', i)
+      end
    }
    setmetatable(action, { __index=function () return function () end end })
    state = state or 'q0'
    offset = offset or 0
    for i = offset + 1, #str do
       state = dfa_transition_table[state][str:sub(i,i)]
-      local result = action[state](i)
+      local result = action[nicknames[state]](i)
       if result then return result end
    end
    return string.format('prefix: "%s"\nstate: %s\n', 
@@ -135,7 +137,7 @@ do
    end
 
    function write_nickname_defines(prefix)
-      for nickname, state_name in pairs(nicknames) do
+      for state_name, nickname in pairs(nicknames) do
 	 print(string.format("#define %s%s %d",
 			     prefix,
 			     nickname,
@@ -158,7 +160,7 @@ size="7,10"
 center=1
 "" [ shape=none ]
 ]]
-   for nickname, state_name in pairs(nicknames) do
+   for state_name, nickname in pairs(nicknames) do
       print(string.format('%s [ label="\\N\\n%s" peripheries=2 ]', state_name, nickname))
    end
    print ('"" -> '..start)
