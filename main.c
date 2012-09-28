@@ -4,7 +4,7 @@ static lua_State *L;
 
 const struct luaL_Reg *libraries[] = {
   base64funcs,
-  streamsfuncs,
+  iofuncs,
   utilfuncs,
   NULL
 };

@@ -665,7 +665,7 @@ static int check_vid_pid(lua_State *L)
   return 1;
 }
 
-const luaL_Reg streamsfuncs[] = {
+const luaL_Reg iofuncs[] = {
   {"io_loop", io_loop},
   {"check_vid_pid", check_vid_pid},
   {"set_timeouts", set_timeouts},

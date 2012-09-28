@@ -69,7 +69,7 @@ int euidaccess(const char *pathname, int mode);
 extern int print_writefd, print_readfd;
 #endif
 
-extern const luaL_Reg mailfuncs[], base64funcs[], streamsfuncs[], utilfuncs[];
+extern const luaL_Reg mailfuncs[], base64funcs[], iofuncs[], utilfuncs[];
 
 int lpsend_validate(unsigned char *data, int len);
 
