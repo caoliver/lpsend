@@ -72,8 +72,8 @@ function scan(str, state, offset)
 end
 
 C_translations = { 
-   ['\010'] = '\\n',
-   ['\013'] = '\\r',
+   ['\n'] = '\\n',
+   ['\r'] = '\\r',
 }
 
 do
@@ -147,9 +147,9 @@ do
 end
 
 dot_translations = { 
-   ['\010'] = 'newline',
-   ['\013'] = 'return',
-   ['\032'] = 'space',
+   ['\n'] = 'newline',
+   ['\r'] = 'return',
+   [' '] = 'space',
 }
 
 function visualize(start)
