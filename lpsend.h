@@ -18,6 +18,7 @@
 #include <linux/ioctl.h>
 #include <libgen.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include <lua.h>
 #include <lauxlib.h>

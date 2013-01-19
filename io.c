@@ -348,7 +348,7 @@ static int io_loop(lua_State *L)
   int append_to_output_buffer(lua_State *L, int posn)
   {
     const char *src;
-    unsigned int len;
+    size_t len;
 
     src = luaL_checklstring(L, posn, &len);
 
@@ -588,9 +588,19 @@ static int io_loop(lua_State *L)
     {
       int ready;
       int readback_available;
+      sigset_t pending_set;
+      static int sig_reported;
 
       setup_select();
       ready = SELECT(number_fds, &readfds, &writefds, NULL, &tv);
+      sigpending(&pending_set);
+      if (!sig_reported && sig_ismemeber(&pending_set, SIGINT))
+	{
+	  sig_reported = 1;
+	  lua_pushstring(L, "got_signal");
+	  return 1;
+	}
+
       if (ready == -1)
 	return posix_error(L, "select failed");
 

@@ -205,7 +205,7 @@ function sendjob(config, timeouts, features, send_report)
 
    function handle.not_postscript()
       append_notice "Sorry!  I can only print PostScript files."
-      write_log "Error: Not a PostScript job" ;
+      write_log "Error: Not a PostScript job." ;
       arguments.add_to_output = job_suffix
       return kill_job(lprng_exit_code.JREMOVE)
    end
@@ -422,6 +422,13 @@ The printer has stalled; you may have lost the end of your print job.]]
       local pjl_handler = pjl_handler[string.sub(args[2],1,1)]
       if not pjl_handler then return bad_pjl(state, args[2]) end
       return pjl_handler(state, args[2])
+   end
+
+   function handle.got_signal()
+      eoj_stopwatch = lpsend.stopwatch()
+      append_notice "Job interrupted by signal.";
+      write_log "Error: Caught signal!";
+      return kill_job(lprng_exit_code.JREMOVE, "kill");
    end
 
    do

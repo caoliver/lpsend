@@ -36,6 +36,19 @@ static void install_constant_tables()
 #endif
 }
 
+static void block_signals()
+{
+  sigset_t newset;
+
+  sigemptyset(&newset);
+  sigaddset(&newset, SIGQUIT);
+#ifndef MOCK
+  sigaddset(&newset, SIGINT);
+#endif
+  sigaddset(&newset, SIGHUP);
+  sigprocmask(SIG_BLOCK, &newset, NULL);
+}
+
 int main(int argc, char *argv[])
 {
   const struct luaL_Reg **libptr;
@@ -43,6 +56,7 @@ int main(int argc, char *argv[])
   char *luaprogname = LPSEND_LUA;
 
   openlog("LPSEND", LOG_CONS | LOG_PERROR, LOG_LPR);
+  block_signals();
 
   L = luaL_newstate();
   luaL_openlibs(L);

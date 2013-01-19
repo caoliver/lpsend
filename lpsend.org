@@ -170,6 +170,8 @@ LPSend - a replacement for usblpsend
    | "pjl_msg", string              | PJL status                            |
    | "stray_delimiter"              | PostScript stray delimiter            |
    | "uel_read"                     | PJL UEL sequence read                 |
+   | "got_signal"                   | Got SIGQUIT, SIGINT, or SIGHUP from   |
+   |                                | LPRng                                 |
    |--------------------------------+---------------------------------------|
     
 * Mocking
