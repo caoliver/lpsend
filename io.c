@@ -594,7 +594,7 @@ static int io_loop(lua_State *L)
       setup_select();
       ready = SELECT(number_fds, &readfds, &writefds, NULL, &tv);
       sigpending(&pending_set);
-      if (!sig_reported && sig_ismemeber(&pending_set, SIGINT))
+      if (!sig_reported && sigismember(&pending_set, SIGINT))
 	{
 	  sig_reported = 1;
 	  lua_pushstring(L, "got_signal");

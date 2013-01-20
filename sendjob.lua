@@ -426,8 +426,8 @@ The printer has stalled; you may have lost the end of your print job.]]
 
    function handle.got_signal()
       eoj_stopwatch = lpsend.stopwatch()
-      append_notice "Job interrupted by signal.";
-      write_log "Error: Caught signal!";
+      append_notice "Job cancelled.";
+      write_log "Notice: Job cancelled";
       return kill_job(lprng_exit_code.JREMOVE, "kill");
    end
 
@@ -436,7 +436,6 @@ The printer has stalled; you may have lost the end of your print job.]]
       if timeouts.job_limit then job_stopwatch = lpsend.stopwatch() end
       repeat
 	 local result = { lpsend.io_loop(arguments) }
-	 --   local old = state
 	 if job_stopwatch and job_stopwatch() > timeouts.job_limit then
 	    append_notice "Your job ran too long. Goodbye."
 	    write_log "Kill: long job"
@@ -445,7 +444,6 @@ The printer has stalled; you may have lost the end of your print job.]]
 	 elseif result[1] ~= "uel_read" then
 	    state = handle[result[1]](state,result)
 	 end
-	 --   write_log(lpsend.wall_clock)..': ('..old..', '..result[1]..') -> '..state)
       until state == "exit"
    end
 
