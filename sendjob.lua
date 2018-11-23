@@ -45,7 +45,7 @@ function sendjob(config, timeouts, features, send_report)
 	 io.open(config.queue_directory..'/'..config.job.log, "a+")
 
       write_log = function(str)
-	 local success, err = job_log:write(str..'\n')
+	 local success, err = job_log:write(str,'\n')
 	 if success then
 	    success, err = job_log:flush()
 	 end

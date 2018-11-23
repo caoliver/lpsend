@@ -64,7 +64,7 @@ end
 
 --  mock_write_printer(string) -> false (nil), errno or bytes written
 function mock_write_printer(str)
-   io.write("PRINTER GETS: "..str)
+   io.write("PRINTER GETS: ",str)
    return #str
 end
 --]]

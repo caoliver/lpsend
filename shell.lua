@@ -3,7 +3,7 @@
 
 function lua_shell(greet)
    local command, next_line, chunk, error
-   io.write((greet and greet..'/' or '')..'Lua shell:\n')
+   io.write((greet and greet..'/' or ''),'Lua shell:\n')
    repeat
       io.write('Lua> ')
       next_line, command = io.read '*l', ''
