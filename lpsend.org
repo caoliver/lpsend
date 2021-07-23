@@ -140,14 +140,14 @@ LPSend - a replacement for usblpsend
 
 **  Input values:
 
-   |------------------------+--------------------------------+---------------|
-   | clear_buffer           | Discard current output buffer  | boolean/nil   |
-   | reset_write_stall_test | Paper out support              | boolean/nil   |
-   | freeze_input           | Stop/start reading job input   | boolean       |
-   |                        | set elapsed drain time if true |               |
-   | notices_only           | Discard normal readback        | boolean/nil   |
-   | add_to_output          | Append output buffer           | string or nil |
-   |------------------------+--------------------------------+---------------|
+   |-------------------------+--------------------------------+---------------|
+   | clear_buffer            | Discard current output buffer  | boolean/nil   |
+   | reset_write_stall_timer | Paper out support              | boolean/nil   |
+   | freeze_input            | Stop/start reading job input   | boolean       |
+   |                         | set elapsed drain time if true |               |
+   | notices_only            | Discard normal readback        | boolean/nil   |
+   | add_to_output           | Append output buffer           | string or nil |
+   |-------------------------+--------------------------------+---------------|
 
 **  Return values:
 

@@ -39,7 +39,7 @@ define_printer {
       select_wait = 100,           -- Wait time for i/o loop select()
       write_stall_limit = 60000,   -- Wait limit for write progress
       read_stall_limit = 3000,	   -- Wait limit for read progress
-      readback_wait = 50,          -- Thread delay on emtry read
+      readback_wait = 50,          -- Thread delay on empty read
 
       -- These dwell in the lua script.
       eoj_drain_time = 1500,       -- Wait for readback after EOJ response seen
